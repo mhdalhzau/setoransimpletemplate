@@ -416,12 +416,12 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
               className="flex-1 bg-blue-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
             >
               <Copy size={16} />
-              Copy ke Clipboard<br>
+              Copy ke Clipboard
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div><br />
   );
 }
 
