@@ -421,7 +421,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
           </div>
         </div>
       </div>
-    </div><br></br>
+    </div> \n
   );
 }
 
