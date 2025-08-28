@@ -66,7 +66,7 @@ function App() {
 
   const totalPengeluaran = pengeluaranItems.reduce((sum, item) => sum + item.amount, 0);
   const totalPemasukan = pemasukanItems.reduce((sum, item) => sum + item.amount, 0);
-  const totalKeseluruhan = setoranData.total + totalPemasukan - totalPengeluaran;
+  const totalKeseluruhan = setoranData.cash + totalPemasukan - totalPengeluaran;
 
   const addPengeluaranItem = (description: string, amount: number) => {
     const newItem: ItemData = {
