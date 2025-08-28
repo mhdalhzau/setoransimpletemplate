@@ -403,7 +403,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
               <div className="text-right">
                 <div className="text-xl font-bold">Rp {formatRupiah(totalKeseluruhan)}</div>
                 <div className="text-xs opacity-75">
-                  Setoran: {formatRupiah(setoranData.total)} + Pemasukan: {formatRupiah(totalPemasukan)} - Pengeluaran: {formatRupiah(totalPengeluaran)}
+                  Setoran: {formatRupiah(setoranData.cash)} + Pemasukan: {formatRupiah(totalPemasukan)} - Pengeluaran: {formatRupiah(totalPengeluaran)}
                 </div>
               </div>
             </div>
