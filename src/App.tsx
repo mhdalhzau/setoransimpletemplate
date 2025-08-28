@@ -410,7 +410,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3" >
+          <div className="flex gap-4" >
             <button 
               onClick={copyToClipboard}
               className="flex-1 bg-blue-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
