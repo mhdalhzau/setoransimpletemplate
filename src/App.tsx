@@ -529,6 +529,11 @@ const disableIosTextFieldZoom = addMaximumScaleToMetaViewport;
 const checkIsIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+const badge = document.querySelector('.badge'); 
+  badge.classList.add('hidden');   
+  badge.classList.remove('hidden');
+  badge.classList.toggle('hidden'); 
+
 if (checkIsIOS()) {
   disableIosTextFieldZoom();
 }
