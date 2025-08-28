@@ -132,8 +132,8 @@ function App() {
 
   const copyToClipboard = () => {
     const text = `
-*Laporan Setoran*
-📋 ${getCurrentDate()}
+*Setoran Harian* 📋
+${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
@@ -174,13 +174,8 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
           {/* Title with Date */}
           <div className="border-b pb-3">
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              📋 Laporan Setoran
-            </h2>
-          </div>
-          <div className="border-b pb-3">
-            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              Setoran Harian 📋 </h2>
              {getCurrentDate()}
-            </h2>
           </div>
 
           {/* Jam Kerja */}
