@@ -411,9 +411,9 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
 
           {/* Action Buttons */}
           <div className="flex gap-6">
-            <button style="margin-bottom:5px;"
+            <button 
               onClick={copyToClipboard}
-              className="flex-1 bg-blue-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 bg-blue-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 margin-bottom:5px"
             >
               <Copy size={16} />
               Copy ke Clipboard
