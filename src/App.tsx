@@ -167,14 +167,19 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
       <div className="max-w-2xl mx-auto px-3">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Setoran Harian</h1>
+         
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-4 space-y-6">
           {/* Title with Date */}
           <div className="border-b pb-3">
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-              📋 Laporan Setoran - {getCurrentDate()}
+              📋 Laporan Setoran
+            </h2>
+          </div>
+          <div className="border-b pb-3">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+             {getCurrentDate()}
             </h2>
           </div>
 
