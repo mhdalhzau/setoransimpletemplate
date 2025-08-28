@@ -422,7 +422,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
         </div>
       </div>
     </div>
-  );<div>---</div>
+  );<br>
 }
 
 interface ItemFormProps {
