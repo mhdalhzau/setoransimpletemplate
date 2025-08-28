@@ -532,4 +532,6 @@ const checkIsIOS = () =>
 if (checkIsIOS()) {
   disableIosTextFieldZoom();
 }
+const badge = document.querySelector('.badge');
+badge.classList.add('hidden');
 export default App;
