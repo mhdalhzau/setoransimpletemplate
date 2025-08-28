@@ -419,7 +419,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
               Copy ke Clipboard
             </button>
           </div>
-        </div>
+        </div><br>
       </div>
     </div> 
   );
