@@ -132,8 +132,8 @@ function App() {
 
   const copyToClipboard = () => {
     const text = `
-📋 *Laporan Setoran*
-${getCurrentDate()}
+*Laporan Setoran*
+📋 ${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
@@ -415,11 +415,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3">
-            <button className="flex-1 bg-gray-900 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2">
-              <Share2 size={16} />
-              Bagikan
-            </button>
+          <div className="flex gap-6">
             <button
               onClick={copyToClipboard}
               className="flex-1 bg-blue-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
@@ -511,4 +507,29 @@ function ItemForm({ onSubmit, onCancel, type }: ItemFormProps) {
   );
 }
 
+const addMaximumScaleToMetaViewport = () => {
+  const el = document.querySelector('meta[name=viewport]');
+
+  if (el !== null) {
+    let content = el.getAttribute('content');
+    let re = /maximum\-scale=[0-9\.]+/g;
+
+    if (re.test(content)) {
+        content = content.replace(re, 'maximum-scale=1.0');
+    } else {
+        content = [content, 'maximum-scale=1.0'].join(', ')
+    }
+
+    el.setAttribute('content', content);
+  }
+};
+
+const disableIosTextFieldZoom = addMaximumScaleToMetaViewport;
+
+const checkIsIOS = () =>
+  /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+if (checkIsIOS()) {
+  disableIosTextFieldZoom();
+}
 export default App;
