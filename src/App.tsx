@@ -169,10 +169,18 @@ function App() {
       errors.push('Nomor Akhir Meter harus lebih besar atau sama dengan Nomor Awal');
     }
     
+    if (showPengeluaranForm) {
+      errors.push('Form Pengeluaran masih terbuka - silakan klik "Tambah" atau "Batal"');
+    }
+    
+    if (showPemasukanForm) {
+      errors.push('Form Pemasukan masih terbuka - silakan klik "Tambah" atau "Batal"');
+    }
+    
     return errors;
   };
   const copyToClipboard = () => {
-    if (!isFormValid()) {
+    if (!isFormValid() || showPengeluaranForm || showPemasukanForm) {
       const errors = getValidationErrors();
       setValidationErrors(errors);
       setShowValidationModal(true);
