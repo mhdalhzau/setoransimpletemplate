@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Share2, Copy, Plus } from 'lucide-react';
+import { FileText, Copy, Plus } from 'lucide-react';
 
 interface MeterData {
   nomorAwal: number;
