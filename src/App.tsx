@@ -131,7 +131,20 @@ function App() {
     return parseInt(value.replace(/\./g, '')) || 0;
   };
 
+  const isFormValid = () => {
+    return namaKaryawan.trim() !== '' && 
+           jamMasuk !== '' && 
+           jamKeluar !== '' && 
+           meterData.nomorAwal > 0 && 
+           meterData.nomorAkhir > 0;
+  };
+
   const copyToClipboard = () => {
+    if (!isFormValid()) {
+      alert('Mohon lengkapi semua field yang wajib diisi:\n- Nama Karyawan\n- Jam Masuk\n- Jam Keluar\n- Nomor Awal Meter\n- Nomor Akhir Meter');
+      return;
+    }
+
     const text = `
 *Setoran Harian* 📋
 👤 Nama: ${namaKaryawan}
@@ -432,14 +445,11 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
           <div className="flex gap-2" >
             <button 
               onClick={copyToClipboard}
-              className="flex-1 bg-blue-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <Copy size={16} />
-              Copy ke Clipboard
-            </button>
-            <button disabled 
-              onClick={copyToClipboard}
-              className="flex-1 bg-white-600 text-white py-2.5 px-4 text-sm rounded-lg font-semibold hover:bg-white-700 transition-colors flex items-center justify-center gap-2"
+              className={`flex-1 py-2.5 px-4 text-sm rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
+                isFormValid() 
+                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
             >
               <Copy size={16} />
               Copy ke Clipboard
