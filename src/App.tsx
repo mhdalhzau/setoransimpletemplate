@@ -135,8 +135,9 @@ function App() {
     return namaKaryawan.trim() !== '' && 
            jamMasuk !== '' && 
            jamKeluar !== '' && 
-           meterData.nomorAwal > 0 && 
-           meterData.nomorAkhir > 0;
+           meterData.nomorAwal >= 0 && 
+           meterData.nomorAkhir >= 0 &&
+           meterData.nomorAkhir >= meterData.nomorAwal;
   };
 
   const copyToClipboard = () => {
