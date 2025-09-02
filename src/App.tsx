@@ -39,6 +39,8 @@ function App() {
   const [pemasukanItems, setPemasukanItems] = useState<ItemData[]>([]);
   const [showPengeluaranForm, setShowPengeluaranForm] = useState(false);
   const [showPemasukanForm, setShowPemasukanForm] = useState(false);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Format jam kerja output
   const getJamKerjaOutput = () => {
@@ -140,9 +142,40 @@ function App() {
            meterData.nomorAkhir >= meterData.nomorAwal;
   };
 
+  const getValidationErrors = () => {
+    const errors: string[] = [];
+    
+    if (namaKaryawan.trim() === '') {
+      errors.push('Nama Karyawan harus diisi');
+    }
+    
+    if (jamMasuk === '') {
+      errors.push('Jam Masuk harus diisi');
+    }
+    
+    if (jamKeluar === '') {
+      errors.push('Jam Keluar harus diisi');
+    }
+    
+    if (meterData.nomorAwal < 0) {
+      errors.push('Nomor Awal Meter tidak boleh negatif');
+    }
+    
+    if (meterData.nomorAkhir < 0) {
+      errors.push('Nomor Akhir Meter tidak boleh negatif');
+    }
+    
+    if (meterData.nomorAkhir < meterData.nomorAwal) {
+      errors.push('Nomor Akhir Meter harus lebih besar atau sama dengan Nomor Awal');
+    }
+    
+    return errors;
+  };
   const copyToClipboard = () => {
     if (!isFormValid()) {
-      alert('Mohon lengkapi semua field yang wajib diisi:\n- Nama Karyawan\n- Jam Masuk\n- Jam Keluar\n- Nomor Awal Meter\n- Nomor Akhir Meter');
+      const errors = getValidationErrors();
+      setValidationErrors(errors);
+      setShowValidationModal(true);
       return;
     }
 
@@ -457,6 +490,42 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
             </button>
           </div>
         </div>
+
+        {/* Validation Modal */}
+        {showValidationModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <span className="text-red-600 text-xl">⚠️</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-800">Form Belum Lengkap</h3>
+              </div>
+              
+              <p className="text-gray-600 mb-4">
+                Mohon lengkapi field berikut sebelum menyalin laporan:
+              </p>
+              
+              <ul className="space-y-2 mb-6">
+                {validationErrors.map((error, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <span className="text-red-500 mt-0.5">•</span>
+                    <span className="text-sm text-gray-700">{error}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowValidationModal(false)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Mengerti
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div> 
   );
