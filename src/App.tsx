@@ -190,7 +190,7 @@ function App() {
     const text = `
 *Setoran Harian* 📋
 ${getCurrentDate()}
-👤 Nama: ${namaKaryawan}
+🤦‍♀️ Nama: ${namaKaryawan}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
@@ -237,7 +237,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
 
           {/* Nama Karyawan */}
           <div>
-            <h3 className="text-sm font-medium text-gray-700 mb-2">👤 Nama Karyawan</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">🤷‍♂️ Nama Karyawan</h3>
             <input
               type="text"
               value={namaKaryawan}
