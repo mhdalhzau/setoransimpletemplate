@@ -189,6 +189,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
               onChange={(e) => setNamaKaryawan(e.target.value)}
               className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Masukkan nama karyawan..."
+              required
             />
           </div>
 
@@ -203,6 +204,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
                   value={jamMasuk}
                   onChange={(e) => setJamMasuk(e.target.value)}
                   className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 />
               </div>
               <div>
@@ -212,6 +214,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
                   value={jamKeluar}
                   onChange={(e) => setJamKeluar(e.target.value)}
                   className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
                 />
               </div>
             </div>
@@ -238,6 +241,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
                   onChange={(e) => setMeterData(prev => ({ ...prev, nomorAwal: Number(e.target.value) || 0 }))}
                   className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="0"
+                  required
                 />
               </div>
               <div>
@@ -248,6 +252,7 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
                   onChange={(e) => setMeterData(prev => ({ ...prev, nomorAkhir: Number(e.target.value) || 0 }))}
                   className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="0"
+                  required
                 />
               </div>
               <div>
