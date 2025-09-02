@@ -20,6 +20,7 @@ interface ItemData {
 }
 
 function App() {
+  const [namaKaryawan, setNamaKaryawan] = useState('');
   const [jamMasuk, setJamMasuk] = useState('');
   const [jamKeluar, setJamKeluar] = useState('');
   const [meterData, setMeterData] = useState<MeterData>({
@@ -133,6 +134,7 @@ function App() {
   const copyToClipboard = () => {
     const text = `
 *Setoran Harian* 📋
+👤 Nama: ${namaKaryawan}
 ${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
@@ -176,6 +178,18 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               Setoran Harian 📋 </h2>
              {getCurrentDate()}
+          </div>
+
+          {/* Nama Karyawan */}
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">👤 Nama Karyawan</h3>
+            <input
+              type="text"
+              value={namaKaryawan}
+              onChange={(e) => setNamaKaryawan(e.target.value)}
+              className="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Masukkan nama karyawan..."
+            />
           </div>
 
           {/* Jam Kerja */}
