@@ -181,8 +181,8 @@ function App() {
 
     const text = `
 *Setoran Harian* 📋
-👤 Nama: ${namaKaryawan}
 ${getCurrentDate()}
+👤 Nama: ${namaKaryawan}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
