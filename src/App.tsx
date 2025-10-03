@@ -122,6 +122,13 @@ function App() {
     }).format(amount);
   };
 
+  const formatNumberWithDots = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
   const formatNumber = (value: string) => {
     // Remove all non-digit characters
     const numericValue = value.replace(/\D/g, '');
@@ -194,8 +201,8 @@ ${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
-• Nomor Awal : ${meterData.nomorAwal}
-• Nomor Akhir: ${meterData.nomorAkhir}
+• Nomor Awal : ${formatNumberWithDots(meterData.nomorAwal)}
+• Nomor Akhir: ${formatNumberWithDots(meterData.nomorAkhir)}
 • Total Liter: ${meterData.totalLiter.toFixed(2)} L
 
 💰 Setoran
