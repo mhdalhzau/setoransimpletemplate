@@ -123,10 +123,7 @@ function App() {
   };
 
   const formatNumberWithDots = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
+    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
 
   const formatNumber = (value: string) => {
