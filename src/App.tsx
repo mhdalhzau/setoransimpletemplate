@@ -123,7 +123,7 @@ function App() {
   };
 
   const formatNumberWithDots = (value: number) => {
-    return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return value.toLocaleString('id-ID');
   };
 
   const formatNumber = (value: string) => {
