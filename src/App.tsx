@@ -18,7 +18,10 @@ interface ItemData {
   description: string;
   amount: number;
 }
-
+// 🔥 Tambahkan fungsi ini
+const formatDecimalComma = (num: number) => {
+  return num.toFixed(2).replace('.', ',');
+};
 function App() {
   const [namaKaryawan, setNamaKaryawan] = useState('');
   const [jamMasuk, setJamMasuk] = useState('');
@@ -50,12 +53,24 @@ function App() {
     return '';
   };
 
-  // Calculate total liter when nomor awal/akhir changes
-  useEffect(() => {
-    const totalLiter = Math.max(0, meterData.nomorAkhir - meterData.nomorAwal);
-    setMeterData(prev => ({ ...prev, totalLiter }));
-  }, [meterData.nomorAwal, meterData.nomorAkhir]);
+ // Hitung total liter saat nomor awal/akhir berubah (mendukung desimal & koma)
+useEffect(() => {
+  const parseDecimal = (value: number | string): number => {
+    if (value === null || value === undefined) return 0;
+    const normalized = value.toString().replace(',', '.');
+    const num = parseFloat(normalized);
+    return isNaN(num) ? 0 : num;
+  };
 
+  const awal = parseDecimal(meterData.nomorAwal);
+  const akhir = parseDecimal(meterData.nomorAkhir);
+  const totalLiter = akhir - awal;
+
+  setMeterData(prev => ({
+    ...prev,
+    totalLiter: totalLiter >= 0 ? totalLiter : 0
+  }));
+}, [meterData.nomorAwal, meterData.nomorAkhir]);
   // Calculate total and cash based on logic: Total = Total Liter * 11500, Cash = Total - QRIS
   useEffect(() => {
     const total = meterData.totalLiter * 11500;
@@ -190,9 +205,7 @@ function App() {
       setShowValidationModal(true);
       return;
     }
- const formatDecimalComma = (num: number): string => {
-    return num.toFixed(2).replace('.', ',');
-  };
+
     const text = `
 *Setoran Harian* 📋
 ${getCurrentDate()}
@@ -200,9 +213,9 @@ ${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
-• Nomor Awal : ${formatDecimalComma(meterData.nomorAwal)} 
-• Nomor Akhir: ${formatDecimalComma(meterData.nomorAkhir)} 
-• Total Liter: ${meterData.totalLiter.toFixed(2)} L
+• Nomor Awal : ${formatDecimalComma(meterData.nomorAwal)}
+• Nomor Akhir: ${formatDecimalComma(meterData.nomorAkhir)}
+• Total Liter: ${formatDecimalComma(meterData.totalLiter)} L
 
 💰 Setoran
 • Cash  : Rp ${formatRupiah(setoranData.cash)}
@@ -321,12 +334,12 @@ Total Pemasukan: Rp ${formatRupiah(totalPemasukan)}
                 <div className="relative">
                   <input
                     type="text"
-                    value={`${meterData.totalLiter.toFixed(2)} L`}
+                     value={`${formatDecimalComma(meterData.totalLiter)} L`}
                     readOnly
                     className="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                   />
                   <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                    {meterData.totalLiter.toFixed(2)} L
+                {formatDecimalComma(meterData.totalLiter)} L
                   </div>
                 </div>
               </div>
