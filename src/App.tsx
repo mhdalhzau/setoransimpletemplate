@@ -213,9 +213,9 @@ ${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
-• Nomor Awal : ${formatDecimalComma(meterData.nomorAwal)}
-• Nomor Akhir: ${formatDecimalComma(meterData.nomorAkhir)}
-• Total Liter: ${formatDecimalComma(meterData.totalLiter)} L
+• Nomor Awal : ${formatDecimalComma(Number(meterData.nomorAwal))}
+• Nomor Akhir: ${formatDecimalComma(Number(meterData.nomorAkhir))}
+• Total Liter: ${formatDecimalComma(Number(meterData.totalLiter))} L
 
 💰 Setoran
 • Cash  : Rp ${formatRupiah(setoranData.cash)}
