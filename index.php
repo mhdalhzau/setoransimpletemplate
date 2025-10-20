@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 // Get current date in Indonesian format
 function getCurrentDate() {
     $days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -13,6 +15,113 @@ function getCurrentDate() {
     $year = date('Y');
     
     return "$day, $date $month $year";
+}
+
+// Format number with dots as thousand separator
+function formatNumber($number) {
+    return number_format($number, 0, ',', '.');
+}
+
+// Format rupiah
+function formatRupiah($amount) {
+    return number_format($amount, 0, ',', '.');
+}
+
+// Process form data
+$namaKaryawan = $_POST['nama_karyawan'] ?? '';
+$jamMasuk = $_POST['jam_masuk'] ?? '';
+$jamKeluar = $_POST['jam_keluar'] ?? '';
+$nomorAwal = (int)($_POST['nomor_awal'] ?? 0);
+$nomorAkhir = (int)($_POST['nomor_akhir'] ?? 0);
+$qris = (int)($_POST['qris'] ?? 0);
+
+// Calculate values
+$totalLiter = max(0, $nomorAkhir - $nomorAwal);
+$total = $totalLiter * 11500;
+$cash = max(0, $total - $qris);
+
+// Handle pengeluaran and pemasukan
+$pengeluaranItems = $_SESSION['pengeluaran'] ?? [];
+$pemasukanItems = $_SESSION['pemasukan'] ?? [];
+
+if ($_POST['action'] ?? '' === 'add_pengeluaran') {
+    $desc = trim($_POST['pengeluaran_desc'] ?? '');
+    $amount = (int)($_POST['pengeluaran_amount'] ?? 0);
+    if ($desc && $amount > 0) {
+        $pengeluaranItems[] = ['description' => $desc, 'amount' => $amount];
+        $_SESSION['pengeluaran'] = $pengeluaranItems;
+    }
+}
+
+if ($_POST['action'] ?? '' === 'add_pemasukan') {
+    $desc = trim($_POST['pemasukan_desc'] ?? '');
+    $amount = (int)($_POST['pemasukan_amount'] ?? 0);
+    if ($desc && $amount > 0) {
+        $pemasukanItems[] = ['description' => $desc, 'amount' => $amount];
+        $_SESSION['pemasukan'] = $pemasukanItems;
+    }
+}
+
+if ($_POST['action'] ?? '' === 'remove_pengeluaran') {
+    $index = (int)($_POST['index'] ?? -1);
+    if (isset($pengeluaranItems[$index])) {
+        unset($pengeluaranItems[$index]);
+        $pengeluaranItems = array_values($pengeluaranItems);
+        $_SESSION['pengeluaran'] = $pengeluaranItems;
+    }
+}
+
+if ($_POST['action'] ?? '' === 'remove_pemasukan') {
+    $index = (int)($_POST['index'] ?? -1);
+    if (isset($pemasukanItems[$index])) {
+        unset($pemasukanItems[$index]);
+        $pemasukanItems = array_values($pemasukanItems);
+        $_SESSION['pemasukan'] = $pemasukanItems;
+    }
+}
+
+$totalPengeluaran = array_sum(array_column($pengeluaranItems, 'amount'));
+$totalPemasukan = array_sum(array_column($pemasukanItems, 'amount'));
+$totalKeseluruhan = $cash + $totalPemasukan - $totalPengeluaran;
+
+// Generate report text
+function generateReport($namaKaryawan, $jamMasuk, $jamKeluar, $nomorAwal, $nomorAkhir, $totalLiter, $cash, $qris, $total, $pengeluaranItems, $pemasukanItems, $totalPengeluaran, $totalPemasukan, $totalKeseluruhan) {
+    $jamKerja = ($jamMasuk && $jamKeluar) ? "($jamMasuk - $jamKeluar)" : '';
+    
+    $report = "*Setoran Harian* 📋\n";
+    $report .= getCurrentDate() . "\n";
+    $report .= "🤦‍♀️ Nama: $namaKaryawan\n";
+    $report .= "🕐 Jam: $jamKerja\n\n";
+    
+    $report .= "⛽ Data Meter\n";
+    $report .= "• Nomor Awal : " . formatNumber($nomorAwal) . "\n";
+    $report .= "• Nomor Akhir: " . formatNumber($nomorAkhir) . "\n";
+    $report .= "• Total Liter: " . number_format($totalLiter, 2) . " L\n\n";
+    
+    $report .= "💰 Setoran\n";
+    $report .= "• Cash  : Rp " . formatRupiah($cash) . "\n";
+    $report .= "• QRIS  : Rp " . formatRupiah($qris) . "\n";
+    $report .= "• Total : Rp " . formatRupiah($total) . "\n\n";
+    
+    if (!empty($pengeluaranItems)) {
+        $report .= "💸 Pengeluaran (PU)\n";
+        foreach ($pengeluaranItems as $item) {
+            $report .= "• {$item['description']}: Rp " . formatRupiah($item['amount']) . "\n";
+        }
+        $report .= "Total Pengeluaran: Rp " . formatRupiah($totalPengeluaran) . "\n\n";
+    }
+    
+    if (!empty($pemasukanItems)) {
+        $report .= "💵 Pemasukan (PU)\n";
+        foreach ($pemasukanItems as $item) {
+            $report .= "• {$item['description']}: Rp " . formatRupiah($item['amount']) . "\n";
+        }
+        $report .= "Total Pemasukan: Rp " . formatRupiah($totalPemasukan) . "\n\n";
+    }
+    
+    $report .= "💼 Total Keseluruhan: Rp " . formatRupiah($totalKeseluruhan);
+    
+    return $report;
 }
 ?>
 
@@ -44,136 +153,151 @@ function getCurrentDate() {
                 <p class="text-sm text-gray-600"><?= getCurrentDate() ?></p>
             </div>
 
-            <!-- Nama Karyawan -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 mb-2">🤷‍♂️ Nama Karyawan</h3>
-                <input
-                    type="text"
-                    id="nama_karyawan"
-                    class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Masukkan nama karyawan..."
-                />
-            </div>
-
-            <!-- Jam Kerja -->
-            <div>
-                <h3 class="text-sm font-medium text-gray-700 mb-2">🕐 Jam Kerja</h3>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Jam Masuk</label>
-                        <input
-                            type="time"
-                            id="jam_masuk"
-                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Jam Keluar</label>
-                        <input
-                            type="time"
-                            id="jam_keluar"
-                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
+            <form method="POST" class="space-y-6">
+                <!-- Nama Karyawan -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">🤷‍♂️ Nama Karyawan</h3>
+                    <input
+                        type="text"
+                        name="nama_karyawan"
+                        value="<?= htmlspecialchars($namaKaryawan) ?>"
+                        class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Masukkan nama karyawan..."
+                        required
+                    />
                 </div>
-                <div id="jam_kerja_display" class="mt-2 p-2 bg-blue-50 rounded-lg hidden">
-                    <span class="text-sm text-blue-700 font-medium">
-                        Jam Kerja: <span id="jam_kerja_text"></span>
-                    </span>
-                </div>
-            </div>
 
-            <!-- Data Meter -->
-            <div>
-                <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    ⛽ Data Meter
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Nomor Awal</label>
-                        <input
-                            type="number"
-                            id="nomor_awal"
-                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="0"
-                        />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Nomor Akhir</label>
-                        <input
-                            type="number"
-                            id="nomor_akhir"
-                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="0"
-                        />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Total Liter</label>
-                        <div class="relative">
+                <!-- Jam Kerja -->
+                <div>
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">🕐 Jam Kerja</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Jam Masuk</label>
                             <input
-                                type="text"
-                                id="total_liter_display"
-                                readonly
-                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
-                                value="0,00 L"
+                                type="time"
+                                name="jam_masuk"
+                                value="<?= htmlspecialchars($jamMasuk) ?>"
+                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
                             />
-                            <div id="total_liter_badge" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                                0,00 L
-                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Setoran -->
-            <div>
-                <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                    💰 Setoran
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Cash</label>
-                        <div class="relative">
-                            <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Jam Keluar</label>
                             <input
-                                type="text"
-                                id="cash_display"
-                                readonly
-                                class="w-full p-2.5 pl-8 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
-                                value="0"
+                                type="time"
+                                name="jam_keluar"
+                                value="<?= htmlspecialchars($jamKeluar) ?>"
+                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                required
                             />
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">QRIS</label>
-                        <div class="relative">
-                            <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                    <?php if ($jamMasuk && $jamKeluar): ?>
+                        <div class="mt-2 p-2 bg-blue-50 rounded-lg">
+                            <span class="text-sm text-blue-700 font-medium">
+                                Jam Kerja: (<?= $jamMasuk ?> - <?= $jamKeluar ?>)
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Data Meter -->
+                <div>
+                    <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        ⛽ Data Meter
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Nomor Awal</label>
                             <input
                                 type="number"
-                                id="qris"
-                                class="w-full p-2.5 pl-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                name="nomor_awal"
+                                value="<?= $nomorAwal ?>"
+                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="0"
+                                required
+                                onchange="this.form.submit()"
                             />
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700 mb-1">Total</label>
-                        <div class="relative">
-                            <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Nomor Akhir</label>
                             <input
-                                type="text"
-                                id="total_display"
-                                readonly
-                                class="w-full p-2.5 pl-8 text-sm border border-green-300 rounded-lg bg-green-50 text-green-700 font-semibold"
-                                value="0"
+                                type="number"
+                                name="nomor_akhir"
+                                value="<?= $nomorAkhir ?>"
+                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                placeholder="0"
+                                required
+                                onchange="this.form.submit()"
                             />
-                            <div id="total_badge" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-medium">
-                                0
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Total Liter</label>
+                            <div class="relative">
+                                <input
+                                    type="text"
+                                    value="<?= number_format($totalLiter, 2) ?> L"
+                                    readonly
+                                    class="w-full p-2.5 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                                />
+                                <div class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-900 text-white px-1.5 py-0.5 rounded text-xs font-medium">
+                                    <?= number_format($totalLiter, 2) ?> L
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+
+                <!-- Setoran -->
+                <div>
+                    <h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        💰 Setoran
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Cash</label>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                                <input
+                                    type="text"
+                                    value="<?= formatRupiah($cash) ?>"
+                                    readonly
+                                    class="w-full p-2.5 pl-8 text-sm border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">QRIS</label>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                                <input
+                                    type="number"
+                                    name="qris"
+                                    value="<?= $qris ?>"
+                                    class="w-full p-2.5 pl-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="0"
+                                    onchange="this.form.submit()"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Total</label>
+                            <div class="relative">
+                                <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
+                                <input
+                                    type="text"
+                                    value="<?= formatRupiah($total) ?>"
+                                    readonly
+                                    class="w-full p-2.5 pl-8 text-sm border border-green-300 rounded-lg bg-green-50 text-green-700 font-semibold"
+                                />
+                                <div class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white px-1.5 py-0.5 rounded-full text-xs font-medium">
+                                    <?= formatRupiah($total) ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
 
             <!-- Pengeluaran -->
             <div>
@@ -189,12 +313,24 @@ function getCurrentDate() {
                     </button>
                 </div>
 
-                <div id="pengeluaran_list"></div>
+                <?php foreach ($pengeluaranItems as $index => $item): ?>
+                    <div class="flex justify-between items-center p-2.5 bg-red-50 rounded-lg mb-2">
+                        <span class="text-sm text-gray-700"><?= htmlspecialchars($item['description']) ?></span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-red-600 font-semibold">Rp <?= formatRupiah($item['amount']) ?></span>
+                            <form method="POST" class="inline">
+                                <input type="hidden" name="action" value="remove_pengeluaran">
+                                <input type="hidden" name="index" value="<?= $index ?>">
+                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
 
                 <div class="bg-red-100 p-2.5 rounded-lg">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-gray-700">Total Pengeluaran:</span>
-                        <span id="total_pengeluaran" class="text-red-600 font-bold text-base">Rp 0</span>
+                        <span class="text-red-600 font-bold text-base">Rp <?= formatRupiah($totalPengeluaran) ?></span>
                     </div>
                 </div>
             </div>
@@ -213,12 +349,24 @@ function getCurrentDate() {
                     </button>
                 </div>
 
-                <div id="pemasukan_list"></div>
+                <?php foreach ($pemasukanItems as $index => $item): ?>
+                    <div class="flex justify-between items-center p-2.5 bg-green-50 rounded-lg mb-2">
+                        <span class="text-sm text-gray-700"><?= htmlspecialchars($item['description']) ?></span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-green-600 font-semibold">Rp <?= formatRupiah($item['amount']) ?></span>
+                            <form method="POST" class="inline">
+                                <input type="hidden" name="action" value="remove_pemasukan">
+                                <input type="hidden" name="index" value="<?= $index ?>">
+                                <button type="submit" class="text-red-600 hover:text-red-800 text-sm">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
 
                 <div class="bg-green-100 p-2.5 rounded-lg">
                     <div class="flex justify-between items-center">
                         <span class="text-sm font-medium text-gray-700">Total Pemasukan:</span>
-                        <span id="total_pemasukan" class="text-green-600 font-bold text-base">Rp 0</span>
+                        <span class="text-green-600 font-bold text-base">Rp <?= formatRupiah($totalPemasukan) ?></span>
                     </div>
                 </div>
             </div>
@@ -228,9 +376,9 @@ function getCurrentDate() {
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-bold">💼 Total Keseluruhan:</h3>
                     <div class="text-right">
-                        <div id="total_keseluruhan" class="text-xl font-bold">Rp 0</div>
-                        <div id="total_breakdown" class="text-xs opacity-75">
-                            Setoran: 0 + Pemasukan: 0 - Pengeluaran: 0
+                        <div class="text-xl font-bold">Rp <?= formatRupiah($totalKeseluruhan) ?></div>
+                        <div class="text-xs opacity-75">
+                            Setoran: <?= formatRupiah($cash) ?> + Pemasukan: <?= formatRupiah($totalPemasukan) ?> - Pengeluaran: <?= formatRupiah($totalPengeluaran) ?>
                         </div>
                     </div>
                 </div>
@@ -244,12 +392,6 @@ function getCurrentDate() {
                 >
                     📋 Copy ke Clipboard
                 </button>
-                <button 
-                    onclick="saveToDatabase()"
-                    class="flex-1 py-2.5 px-4 text-sm rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700"
-                >
-                    💾 Simpan ke Database
-                </button>
             </div>
         </div>
     </div>
@@ -258,13 +400,14 @@ function getCurrentDate() {
     <div id="pengeluaranModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50 p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Tambah Pengeluaran</h3>
-            <form id="pengeluaranForm">
+            <form method="POST">
+                <input type="hidden" name="action" value="add_pengeluaran">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
                         <input
                             type="text"
-                            id="pengeluaran_desc"
+                            name="pengeluaran_desc"
                             class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Masukkan keterangan pengeluaran..."
                             required
@@ -276,7 +419,7 @@ function getCurrentDate() {
                             <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
                             <input
                                 type="number"
-                                id="pengeluaran_amount"
+                                name="pengeluaran_amount"
                                 class="w-full p-2.5 pl-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="0"
                                 required
@@ -307,13 +450,14 @@ function getCurrentDate() {
     <div id="pemasukanModal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50 p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Tambah Pemasukan</h3>
-            <form id="pemasukanForm">
+            <form method="POST">
+                <input type="hidden" name="action" value="add_pemasukan">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan</label>
                         <input
                             type="text"
-                            id="pemasukan_desc"
+                            name="pemasukan_desc"
                             class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="Masukkan keterangan pemasukan..."
                             required
@@ -325,7 +469,7 @@ function getCurrentDate() {
                             <span class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">Rp</span>
                             <input
                                 type="number"
-                                id="pemasukan_amount"
+                                name="pemasukan_amount"
                                 class="w-full p-2.5 pl-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="0"
                                 required
@@ -353,232 +497,16 @@ function getCurrentDate() {
     </div>
 
     <script>
-        // Global data storage
-        let appData = {
-            pengeluaran: [],
-            pemasukan: [],
-            calculations: {
-                totalLiter: 0,
-                cash: 0,
-                total: 0,
-                totalPengeluaran: 0,
-                totalPemasukan: 0,
-                totalKeseluruhan: 0
-            }
-        };
-
-        // Format number with comma as decimal separator and dot as thousand separator
-        function formatNumber(number, decimals = 0) {
-            return new Intl.NumberFormat('id-ID', {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals
-            }).format(number);
-        }
-
-        // Format rupiah
-        function formatRupiah(amount) {
-            return formatNumber(amount, 0);
-        }
-
-        // Calculate all values
-        function calculateAll() {
-            const nomorAwal = parseInt(document.getElementById('nomor_awal').value) || 0;
-            const nomorAkhir = parseInt(document.getElementById('nomor_akhir').value) || 0;
-            const qris = parseInt(document.getElementById('qris').value) || 0;
-
-            // Calculate total liter
-            const totalLiter = Math.max(0, nomorAkhir - nomorAwal);
-            appData.calculations.totalLiter = totalLiter;
-
-            // Calculate total setoran
-            const total = totalLiter * 11500;
-            appData.calculations.total = total;
-
-            // Calculate cash
-            const cash = Math.max(0, total - qris);
-            appData.calculations.cash = cash;
-
-            // Calculate totals
-            appData.calculations.totalPengeluaran = appData.pengeluaran.reduce((sum, item) => sum + item.amount, 0);
-            appData.calculations.totalPemasukan = appData.pemasukan.reduce((sum, item) => sum + item.amount, 0);
-            appData.calculations.totalKeseluruhan = cash + appData.calculations.totalPemasukan - appData.calculations.totalPengeluaran;
-
-            updateDisplay();
-        }
-
-        // Update display
-        function updateDisplay() {
-            const calc = appData.calculations;
-
-            // Update meter display
-            document.getElementById('total_liter_display').value = formatNumber(calc.totalLiter, 2) + ' L';
-            document.getElementById('total_liter_badge').textContent = formatNumber(calc.totalLiter, 2) + ' L';
-
-            // Update setoran display
-            document.getElementById('cash_display').value = formatRupiah(calc.cash);
-            document.getElementById('total_display').value = formatRupiah(calc.total);
-            document.getElementById('total_badge').textContent = formatRupiah(calc.total);
-
-            // Update totals
-            document.getElementById('total_pengeluaran').textContent = 'Rp ' + formatRupiah(calc.totalPengeluaran);
-            document.getElementById('total_pemasukan').textContent = 'Rp ' + formatRupiah(calc.totalPemasukan);
-            document.getElementById('total_keseluruhan').textContent = 'Rp ' + formatRupiah(calc.totalKeseluruhan);
-            document.getElementById('total_breakdown').textContent = 
-                `Setoran: ${formatRupiah(calc.cash)} + Pemasukan: ${formatRupiah(calc.totalPemasukan)} - Pengeluaran: ${formatRupiah(calc.totalPengeluaran)}`;
-
-            // Update jam kerja display
-            updateJamKerjaDisplay();
-        }
-
-        // Update jam kerja display
-        function updateJamKerjaDisplay() {
-            const jamMasuk = document.getElementById('jam_masuk').value;
-            const jamKeluar = document.getElementById('jam_keluar').value;
-            const display = document.getElementById('jam_kerja_display');
-            const text = document.getElementById('jam_kerja_text');
-
-            if (jamMasuk && jamKeluar) {
-                text.textContent = `(${jamMasuk} - ${jamKeluar})`;
-                display.classList.remove('hidden');
-            } else {
-                display.classList.add('hidden');
-            }
-        }
-
-        // Render pengeluaran list
-        function renderPengeluaranList() {
-            const container = document.getElementById('pengeluaran_list');
-            container.innerHTML = '';
-
-            appData.pengeluaran.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-2.5 bg-red-50 rounded-lg mb-2';
-                div.innerHTML = `
-                    <span class="text-sm text-gray-700">${item.description}</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-red-600 font-semibold">Rp ${formatRupiah(item.amount)}</span>
-                        <button onclick="removePengeluaran(${index})" class="text-red-600 hover:text-red-800 text-sm">✕</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Render pemasukan list
-        function renderPemasukanList() {
-            const container = document.getElementById('pemasukan_list');
-            container.innerHTML = '';
-
-            appData.pemasukan.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center p-2.5 bg-green-50 rounded-lg mb-2';
-                div.innerHTML = `
-                    <span class="text-sm text-gray-700">${item.description}</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-sm text-green-600 font-semibold">Rp ${formatRupiah(item.amount)}</span>
-                        <button onclick="removePemasukan(${index})" class="text-red-600 hover:text-red-800 text-sm">✕</button>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // Add pengeluaran
-        function addPengeluaran(description, amount) {
-            appData.pengeluaran.push({ description, amount });
-            renderPengeluaranList();
-            calculateAll();
-        }
-
-        // Remove pengeluaran
-        function removePengeluaran(index) {
-            appData.pengeluaran.splice(index, 1);
-            renderPengeluaranList();
-            calculateAll();
-        }
-
-        // Add pemasukan
-        function addPemasukan(description, amount) {
-            appData.pemasukan.push({ description, amount });
-            renderPemasukanList();
-            calculateAll();
-        }
-
-        // Remove pemasukan
-        function removePemasukan(index) {
-            appData.pemasukan.splice(index, 1);
-            renderPemasukanList();
-            calculateAll();
-        }
-
-        // Modal functions
         function showModal(modalId) {
             document.getElementById(modalId).classList.add('show');
         }
 
         function hideModal(modalId) {
             document.getElementById(modalId).classList.remove('show');
-            // Clear form fields
-            if (modalId === 'pengeluaranModal') {
-                document.getElementById('pengeluaran_desc').value = '';
-                document.getElementById('pengeluaran_amount').value = '';
-            } else if (modalId === 'pemasukanModal') {
-                document.getElementById('pemasukan_desc').value = '';
-                document.getElementById('pemasukan_amount').value = '';
-            }
         }
 
-        // Generate report text
-        function generateReport() {
-            const namaKaryawan = document.getElementById('nama_karyawan').value || '';
-            const jamMasuk = document.getElementById('jam_masuk').value || '';
-            const jamKeluar = document.getElementById('jam_keluar').value || '';
-            const nomorAwal = parseInt(document.getElementById('nomor_awal').value) || 0;
-            const nomorAkhir = parseInt(document.getElementById('nomor_akhir').value) || 0;
-            const qris = parseInt(document.getElementById('qris').value) || 0;
-            
-            const calc = appData.calculations;
-            const jamKerja = (jamMasuk && jamKeluar) ? `(${jamMasuk} - ${jamKeluar})` : '';
-            
-            let report = "*Setoran Harian* 📋\n";
-            report += "<?= getCurrentDate() ?>\n";
-            report += `🤦‍♀️ Nama: ${namaKaryawan}\n`;
-            report += `🕐 Jam: ${jamKerja}\n\n`;
-            
-            report += "⛽ Data Meter\n";
-            report += `• Nomor Awal : ${formatNumber(nomorAwal)}\n`;
-            report += `• Nomor Akhir: ${formatNumber(nomorAkhir)}\n`;
-            report += `• Total Liter: ${formatNumber(calc.totalLiter, 2)} L\n\n`;
-            
-            report += "💰 Setoran\n";
-            report += `• Cash  : Rp ${formatRupiah(calc.cash)}\n`;
-            report += `• QRIS  : Rp ${formatRupiah(qris)}\n`;
-            report += `• Total : Rp ${formatRupiah(calc.total)}\n\n`;
-            
-            if (appData.pengeluaran.length > 0) {
-                report += "💸 Pengeluaran (PU)\n";
-                appData.pengeluaran.forEach(item => {
-                    report += `• ${item.description}: Rp ${formatRupiah(item.amount)}\n`;
-                });
-                report += `Total Pengeluaran: Rp ${formatRupiah(calc.totalPengeluaran)}\n\n`;
-            }
-            
-            if (appData.pemasukan.length > 0) {
-                report += "💵 Pemasukan (PU)\n";
-                appData.pemasukan.forEach(item => {
-                    report += `• ${item.description}: Rp ${formatRupiah(item.amount)}\n`;
-                });
-                report += `Total Pemasukan: Rp ${formatRupiah(calc.totalPemasukan)}\n\n`;
-            }
-            
-            report += `💼 Total Keseluruhan: Rp ${formatRupiah(calc.totalKeseluruhan)}`;
-            
-            return report;
-        }
-
-        // Copy to clipboard
         function copyToClipboard() {
-            const reportText = generateReport();
+            const reportText = `<?= addslashes(generateReport($namaKaryawan, $jamMasuk, $jamKeluar, $nomorAwal, $nomorAkhir, $totalLiter, $cash, $qris, $total, $pengeluaranItems, $pemasukanItems, $totalPengeluaran, $totalPemasukan, $totalKeseluruhan)) ?>`;
             
             navigator.clipboard.writeText(reportText).then(() => {
                 alert('Laporan berhasil disalin ke clipboard!');
@@ -594,102 +522,11 @@ function getCurrentDate() {
             });
         }
 
-        // Save to database
-        async function saveToDatabase() {
-            const namaKaryawan = document.getElementById('nama_karyawan').value;
-            const jamMasuk = document.getElementById('jam_masuk').value;
-            const jamKeluar = document.getElementById('jam_keluar').value;
-            const nomorAwal = parseInt(document.getElementById('nomor_awal').value) || 0;
-            const nomorAkhir = parseInt(document.getElementById('nomor_akhir').value) || 0;
-            const qris = parseInt(document.getElementById('qris').value) || 0;
-
-            if (!namaKaryawan || !jamMasuk || !jamKeluar) {
-                alert('Mohon lengkapi nama karyawan dan jam kerja!');
-                return;
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('show');
             }
-
-            const data = {
-                nama_karyawan: namaKaryawan,
-                jam_masuk: jamMasuk,
-                jam_keluar: jamKeluar,
-                nomor_awal: nomorAwal,
-                nomor_akhir: nomorAkhir,
-                total_liter: appData.calculations.totalLiter,
-                qris: qris,
-                cash: appData.calculations.cash,
-                total_setoran: appData.calculations.total,
-                total_pengeluaran: appData.calculations.totalPengeluaran,
-                total_pemasukan: appData.calculations.totalPemasukan,
-                total_keseluruhan: appData.calculations.totalKeseluruhan,
-                pengeluaran: appData.pengeluaran,
-                pemasukan: appData.pemasukan
-            };
-
-            try {
-                const response = await fetch('api.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Data berhasil disimpan ke database!');
-                } else {
-                    alert('Error: ' + result.message);
-                }
-            } catch (error) {
-                alert('Error: ' + error.message);
-            }
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Input event listeners for live calculation
-            ['nomor_awal', 'nomor_akhir', 'qris'].forEach(id => {
-                document.getElementById(id).addEventListener('input', calculateAll);
-            });
-
-            // Jam kerja event listeners
-            ['jam_masuk', 'jam_keluar'].forEach(id => {
-                document.getElementById(id).addEventListener('change', updateJamKerjaDisplay);
-            });
-
-            // Form submissions
-            document.getElementById('pengeluaranForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const desc = document.getElementById('pengeluaran_desc').value.trim();
-                const amount = parseInt(document.getElementById('pengeluaran_amount').value) || 0;
-                
-                if (desc && amount > 0) {
-                    addPengeluaran(desc, amount);
-                    hideModal('pengeluaranModal');
-                }
-            });
-
-            document.getElementById('pemasukanForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const desc = document.getElementById('pemasukan_desc').value.trim();
-                const amount = parseInt(document.getElementById('pemasukan_amount').value) || 0;
-                
-                if (desc && amount > 0) {
-                    addPemasukan(desc, amount);
-                    hideModal('pemasukanModal');
-                }
-            });
-
-            // Close modal when clicking outside
-            document.addEventListener('click', function(event) {
-                if (event.target.classList.contains('modal')) {
-                    event.target.classList.remove('show');
-                }
-            });
-
-            // Initial calculation
-            calculateAll();
         });
     </script>
 </body>
