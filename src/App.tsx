@@ -190,7 +190,9 @@ function App() {
       setShowValidationModal(true);
       return;
     }
-
+ const formatDecimalComma = (num: number): string => {
+    return num.toFixed(2).replace('.', ',');
+  };
     const text = `
 *Setoran Harian* 📋
 ${getCurrentDate()}
@@ -198,8 +200,8 @@ ${getCurrentDate()}
 🕐 Jam: ${getJamKerjaOutput()}
 
 ⛽ Data Meter
-• Nomor Awal : ${formatNumberWithDots(meterData.nomorAwal)}
-• Nomor Akhir: ${formatNumberWithDots(meterData.nomorAkhir)}
+• Nomor Awal : ${formatDecimalComma(meterData.nomorAwal)} 
+• Nomor Akhir: ${formatDecimalComma(meterData.nomorAkhir)} 
 • Total Liter: ${meterData.totalLiter.toFixed(2)} L
 
 💰 Setoran
